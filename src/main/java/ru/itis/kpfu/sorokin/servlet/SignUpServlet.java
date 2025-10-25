@@ -24,8 +24,6 @@ import java.nio.file.Paths;
 public class SignUpServlet extends HttpServlet {
 
     private final UserService userService = new UserServiceImpl();
-    private static final String FILE_PREFFIX = "/Users/egorsorokin/IdeaProjects/sorokin_400_cw4/src/main/webapp";
-    public static int DIRECTORIES_COUNT = 5;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -38,24 +36,11 @@ public class SignUpServlet extends HttpServlet {
         String lastname = req.getParameter("lastname");
         String login = req.getParameter("login");
         String password = req.getParameter("password");
+        Part image = req.getPart("file");
 
-        Part part = req.getPart("file");
-        String filename = Paths.get(part.getSubmittedFileName()).getFileName().toString();
-        String path = "/images" + File.separator
-                + Math.abs(filename.hashCode() % DIRECTORIES_COUNT) + File.separator + filename;
+        InputStream content = image.getInputStream();
 
-        File file = new File(FILE_PREFFIX + path);
-
-        InputStream content = part.getInputStream();
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-        FileOutputStream outputStream = new FileOutputStream(file);
-        byte[] buffer = new byte[content.available()];
-        content.read(buffer);
-        outputStream.write(buffer);
-        outputStream.close();
-
-        userService.save(name, lastname, login, password, path);
+        userService.save(name, lastname, login, password, content);
 
         resp.sendRedirect("/index");
     }

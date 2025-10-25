@@ -1,17 +1,24 @@
 package ru.itis.kpfu.sorokin.service.impl;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import ru.itis.kpfu.sorokin.dao.UserDao;
 import ru.itis.kpfu.sorokin.dao.impl.UserDaoImpl;
 import ru.itis.kpfu.sorokin.dto.UserDto;
 import ru.itis.kpfu.sorokin.entity.User;
 import ru.itis.kpfu.sorokin.service.UserService;
+import ru.itis.kpfu.sorokin.util.CloudinaryUtil;
 import ru.itis.kpfu.sorokin.util.PasswordUtil;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 public class UserServiceImpl implements UserService {
 
     private UserDao userDao = new UserDaoImpl();
+    private Cloudinary cloudinary = CloudinaryUtil.getInstance();
 
 
     @Override
@@ -41,8 +48,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void save(String name, String lastname, String login, String password, String image) {
+    public void save(String name, String lastname, String login, String password, InputStream imageInputStream) throws IOException {
         String passwordEncrypt = PasswordUtil.encrypt(password);
+
+        byte[] bytes = imageInputStream.readAllBytes();
+
+        Map uploadResult = cloudinary.uploader().upload(bytes, ObjectUtils.emptyMap());
+
+        String imageUrl = (String) uploadResult.get("secure_url");
 
         User user = new User(
                 null,
@@ -50,7 +63,7 @@ public class UserServiceImpl implements UserService {
                 lastname,
                 login,
                 passwordEncrypt,
-                image
+                imageUrl
         );
 
         userDao.save(user);
